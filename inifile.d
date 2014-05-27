@@ -85,8 +85,16 @@ void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
 }
 
 void writeValue(ORange,T)(ORange orange, string name, T value) @trusted 
+	if(isOutputRange!(ORange, string))
 {
 	orange.formattedWrite("%s=\"%s\"\n", name, to!string(value));
+}
+
+void writeValues(ORange,T)(ORange orange, string name, T value) @trusted 
+	if(isOutputRange!(ORange, string) )
+		//&& isArray!(T))
+{
+	//orange.formattedWrite("%s=\"%s\"\n", name, to!string(value));
 }
 
 void writeINIFile(T)(ref T t, string filename) @trusted {
@@ -101,9 +109,12 @@ void writeINIFile(T)(ref T t, string filename) @trusted {
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T,it)) {
-			//writefln("%d %s", __LINE__, getINI!(T,it));
 			writeComment(oRange, getINI!(T,it));
-			writeValue(oRange, it, __traits(getMember, t, it));
+			if(!isArray!(typeid(__traits(getMember, T, it)))) {
+				writeValues(oRange, it, __traits(getMember, t, it));
+			} else {
+				writeValue(oRange, it, __traits(getMember, t, it));
+			}
 		}
 	}
 }
