@@ -87,33 +87,45 @@ void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
 void writeValue(ORange,T)(ORange orange, string name, T value) @trusted 
 	if(isOutputRange!(ORange, string))
 {
-	orange.formattedWrite("%s=\"%s\"\n", name, to!string(value));
+
+	orange.formattedWrite("%s=\"%s\"\n", name, value);
 }
 
-void writeValues(ORange,T)(ORange orange, string name, T value) @trusted 
-	if(isOutputRange!(ORange, string) )
-		//&& isArray!(T))
+void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted 
+	if(isOutputRange!(ORange, string)) //&& isArray!(T))
 {
-	//orange.formattedWrite("%s=\"%s\"\n", name, to!string(value));
+	for(size_t i = 0; i < value.length; ++i) {
+		oRange.formattedWrite("[%s:%d]\n", name, i);
+		writeINIFileImpl(value[i], oRange, false);
+	}
 }
 
 void writeINIFile(T)(ref T t, string filename) @trusted {
 	auto oFile = File(filename, "w");
 	auto oRange = oFile.lockingTextWriter();
-	
-	if(isINI!T) {
+	writeINIFileImpl(t, oRange, true);
+}
+
+void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section) 
+		@trusted {
+	if(isINI!T && section) {
 		writeComment(oRange, getINI!T());
 	}
 
-	oRange.formattedWrite("[%s]\n", getTypeName!T);
+	if(section) {
+		oRange.formattedWrite("[%s]\n", getTypeName!T);
+	}
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T,it)) {
 			writeComment(oRange, getINI!(T,it));
-			if(!isArray!(typeid(__traits(getMember, T, it)))) {
-				writeValues(oRange, it, __traits(getMember, t, it));
-			} else {
+			static if(isBasicType!(typeof(__traits(getMember, T, it))) ||
+				isSomeString!(typeof(__traits(getMember, T, it)))) 
+			{
 				writeValue(oRange, it, __traits(getMember, t, it));
+			} else static if(isArray!(typeof(__traits(getMember, T, it)))) {
+				writeValues(oRange, getTypeName!T ~ "." ~ it, 
+					__traits(getMember, t, it));
 			}
 		}
 	}
