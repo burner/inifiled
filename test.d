@@ -7,6 +7,11 @@ void main() {
 	p.childs ~= Child("Foo", 1);
 	p.childs ~= Child("Bar", 2);
 
+	p.someStrings ~= "Hello";
+	p.someStrings ~= "World";
+
+	p.someInts ~= [1,2];
+
 	readINIFile(p, "filename.ini");
 	writeINIFile(p, "filename.ini");
 }
