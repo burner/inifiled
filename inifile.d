@@ -134,7 +134,8 @@ string buildSectionParse(T)() @safe {
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T, it) && !isBasicType!(typeof(__traits(getMember, T, it))) 
-			&& !isSomeString!(typeof(__traits(getMember, T, it)))) 
+			&& !isSomeString!(typeof(__traits(getMember, T, it))) 
+			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
 			ret ~= "case %s: readINIFileImpl(this.%s, input); break;\n".format(
 				it, it);
