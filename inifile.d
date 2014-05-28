@@ -1,6 +1,7 @@
 module inifile;
 
 import std.algorithm;
+import std.exception;
 import std.stdio;
 import std.conv;
 import std.range;
@@ -95,19 +96,30 @@ bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
 		} else if(it == '[') {
 			f = true;
 			break;
+		} else {
+			break;
 		}
 	}
 
 	foreach_reverse(it; line) {
 		if(it == ' ' || it == '\t') {
 			continue;
-		} else if(it == '[') {
-			f = true;
+		} else if(it == ']') {
+			b = true;
+			break;
+		} else {
 			break;
 		}
 	}
 
 	return f && b;
+}
+
+unittest {
+	assert(isSection("[initest.Person]"));
+	assert(isSection(" [initest.Person]"));
+	assert(isSection(" [initest.Person] "));
+	assert(!isSection(";[initest.Person] "));
 }
 
 pure string getSection(T)(T line) @safe if(isInputRange!T) {
@@ -118,10 +130,28 @@ pure string getValue(T)(T line) @safe if(isInputRange!T) {
 	return getTimpl!('"','"')(line);
 }
 
+unittest {
+	assert(getValue("firstname=\"Foo\"") == "Foo");
+	assert(getValue("firstname=\"Foo\",\"Bar\"") == "Foo\",\"Bar");
+}
+
+pure string getKey(T)(T line) @safe if(isInputRange!T) {
+	ptrdiff_t eq = line.indexOf('=');
+	enforce(eq != -1, "key value pair needs equal sign");
+
+	return line[0 .. eq].strip();
+}
+
+unittest {
+	assert(getKey("firstname=\"Foo\"") == "firstname");
+	assert(getKey("lastname =\"Foo\",\"Bar\"") == "lastname");
+}
+
 pure string getTimpl(char l, char r, T)(T line) @safe if(isInputRange!T) {
 	ptrdiff_t l = line.indexOf(l);
 	ptrdiff_t r = line.lastIndexOf(r);
 
+	assert(l+1 < line.length, format("l+1 %u line %u", l+1, line.length));
 	return line[l+1 .. r].idup;
 }
 
@@ -166,7 +196,7 @@ string buildSectionParse(T)() @safe {
 }
 
 string buildValueParse(T)() @safe {
-	string ret = "switch(line) {\n";
+	string ret = "switch(getKey(line.idup)) {\n";
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T, it) && (isBasicType!(typeof(__traits(getMember, T, it))) 
@@ -185,11 +215,15 @@ void readINIFileImpl(T,IRange)(ref T t, IRange input) {
 		if(line.startsWith(";")) {
 			continue;
 		}
+		writefln("%s %s %b", line, fullyQualifiedName!T, isSection(line));
 
 		if(isKeyValue(line)) {
-			//pragma(msg, buildValueParse!(T));
+			pragma(msg, buildValueParse!(T));
+			writefln("%d %s %s", 192, getKey(line.idup), 
+				getValue(line.idup));
 			mixin(buildValueParse!(T));
-		} else if(isSection(line)) {
+		} else if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
+			writeln(194);
 			//pragma(msg, buildSectionParse!(T));
 			mixin(buildSectionParse!(T));
 		}

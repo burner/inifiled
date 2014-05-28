@@ -46,7 +46,4 @@ struct Person {
 
 	@INI("A Spose")
 	Spose spose;
-
-	@INI("The childs")
-	Child[] childs;
 }
