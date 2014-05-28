@@ -86,7 +86,6 @@ void readINIFile(T)(ref T t, string filename) {
 }
 
 bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
-
 	bool f;
 	bool b;
 
@@ -111,11 +110,24 @@ bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
 	return f && b;
 }
 
-pure string getSection(string line) @safe {
-	ptrdiff_t f = line.indexOf('[');
-	ptrdiff_t b = line.lastIndexOf(']');
+pure string getSection(T)(T line) @safe if(isInputRange!T) {
+	return getTimpl!('[',']')(line);
+}
 
-	return line[f+1 .. b].idup;
+pure string getValue(T)(T line) @safe if(isInputRange!T) {
+	return getTimpl!('"','"')(line);
+}
+
+pure string getTimpl(char l, char r, T)(T line) @safe if(isInputRange!T) {
+	ptrdiff_t l = line.indexOf(l);
+	ptrdiff_t r = line.lastIndexOf(r);
+
+	return line[l+1 .. r].idup;
+}
+
+pure bool isKeyValue(T)(T line) @safe if(isInputRange!T) {
+	ptrdiff_t idx = line.indexOf('=');
+	return idx != -1;
 }
 
 unittest {
@@ -127,6 +139,14 @@ unittest {
 		getSection("[initest.Person]"));
 	assert(getSection("[initest.Person] ") == "initest.Person",
 		getSection("[initest.Person]"));
+	assert(getValue("\"initest.Person\"") == "initest.Person",
+		getValue("\"initest.Person\""));
+	assert(getValue(" \"initest.Person\"") == "initest.Person",
+		getValue("\"initest.Person\""));
+	assert(getValue(" \"initest.Person\" ") == "initest.Person",
+		getValue("\"initest.Person\""));
+	assert(getValue("\"initest.Person\" ") == "initest.Person",
+		getValue("\"initest.Person\""));
 }
 
 string buildSectionParse(T)() @safe {
@@ -137,12 +157,27 @@ string buildSectionParse(T)() @safe {
 			&& !isSomeString!(typeof(__traits(getMember, T, it))) 
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
-			ret ~= "case %s: readINIFileImpl(this.%s, input); break;\n".format(
-				it, it);
+			ret ~= ("case \"%s\": readINIFileImpl(t.%s, input); break;\n").
+				format(it, it);
 		}
 	}
 
-	return ret ~ "}\n";
+	return ret ~ "default: break;\n}\n";
+}
+
+string buildValueParse(T)() @safe {
+	string ret = "switch(line) {\n";
+
+	foreach(it; __traits(allMembers, T)) {
+		if(isINI!(T, it) && (isBasicType!(typeof(__traits(getMember, T, it))) 
+			|| isSomeString!(typeof(__traits(getMember, T, it)))))
+		{
+			ret ~= ("case \"%s\": t.%s = to!(typeof(t.%s))("
+				~ "getValue(line)); break;\n").format(it, it, it);
+		}
+	}
+
+	return ret ~ "default: break;\n}\n";
 }
 
 void readINIFileImpl(T,IRange)(ref T t, IRange input) {
@@ -151,10 +186,13 @@ void readINIFileImpl(T,IRange)(ref T t, IRange input) {
 			continue;
 		}
 
-		if(isSection(line)) {
-			pragma(msg, buildSectionParse!(T));
+		if(isKeyValue(line)) {
+			//pragma(msg, buildValueParse!(T));
+			mixin(buildValueParse!(T));
+		} else if(isSection(line)) {
+			//pragma(msg, buildSectionParse!(T));
+			mixin(buildSectionParse!(T));
 		}
-
 	}
 }
 
