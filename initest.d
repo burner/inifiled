@@ -34,15 +34,17 @@ struct Person {
 	@INI("The height of the Person")
 	float height;
 
+	/*
 	@INI("Some strings with a very long long INI description that is longer" ~
 		" than eigthy lines hopefully."
 	)
 	string[] someStrings;
 
-	int dontShowThis;
-
 	@INI("Some ints")
 	int[] someInts;
+	*/
+
+	int dontShowThis;
 
 	@INI("A Spose")
 	Spose spose;

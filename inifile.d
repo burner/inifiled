@@ -180,7 +180,7 @@ unittest {
 }
 
 string buildSectionParse(T)() @safe {
-	string ret = "switch(line) {\n";
+	string ret = "switch(getSection(line)) {\n";
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T, it) && !isBasicType!(typeof(__traits(getMember, T, it))) 
@@ -188,7 +188,9 @@ string buildSectionParse(T)() @safe {
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
 			ret ~= ("case \"%s\": readINIFileImpl(t.%s, input); break;\n").
-				format(it, it);
+				format(fullyQualifiedName!(typeof(__traits(getMember, T, it))),
+					it
+				);
 		}
 	}
 
@@ -210,21 +212,28 @@ string buildValueParse(T)() @safe {
 	return ret ~ "default: break;\n}\n";
 }
 
-void readINIFileImpl(T,IRange)(ref T t, IRange input) {
-	foreach(line; input) {
+void readINIFileImpl(T,IRange)(ref T t, ref IRange input) {
+	writefln("%d %s", __LINE__, fullyQualifiedName!(typeof(t)));
+	//foreach(line; input) {
+	ElementType!IRange line;
+	while(!input.empty()) {
+		line = input.front();
+		input.popFront();
+
 		if(line.startsWith(";")) {
 			continue;
 		}
-		writefln("%s %s %b", line, fullyQualifiedName!T, isSection(line));
+		writefln("%d %s %s %b", __LINE__, line, fullyQualifiedName!T, 
+			isSection(line));
 
 		if(isKeyValue(line)) {
 			pragma(msg, buildValueParse!(T));
-			writefln("%d %s %s", 192, getKey(line.idup), 
+			writefln("%d %s %s", __LINE__, getKey(line.idup), 
 				getValue(line.idup));
 			mixin(buildValueParse!(T));
 		} else if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
-			writeln(194);
-			//pragma(msg, buildSectionParse!(T));
+			writefln("%d %s", __LINE__, getSection(line));
+			pragma(msg, buildSectionParse!(T));
 			mixin(buildSectionParse!(T));
 		}
 	}

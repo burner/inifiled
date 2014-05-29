@@ -9,10 +9,13 @@ void main() {
 	p.age = 1337;
 	p.height = 7331.0;
 
+	/*
 	p.someStrings ~= "Hello";
 	p.someStrings ~= "World";
 
 	p.someInts ~= [1,2];
+	*/
+
 	p.spose.firstname = "World";
 	p.spose.age = 72;
 
