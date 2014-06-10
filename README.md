@@ -13,24 +13,28 @@ import initest;
 
 import inifile;
 
-@INI("A child must have a parent") struct Child {
+@INI("A child must have a parent") 
+struct Child {
 	@INI("The firstname of the child") string firstname;
 
 	@INI("The age of the child") int age;
 }
 
-@INI("A Spose") struct Spose {
+@INI("A Spose") 
+struct Spose {
 	@INI("The age of the spose") int age;
 
 	// REGARD the nesting
 	@INI("The House of the spose") House house;
 }
 
-@INI("A Dog") struct Dog {
+@INI("A Dog") 
+struct Dog {
 	@INI("The name of the Dog") string name;
 }
 
-@INI("A Person") struct Person {
+@INI("A Person") 
+struct Person {
 	@INI("The lastname of the Person") string lastname;
 
 	@INI("The height of the Person") float height;
