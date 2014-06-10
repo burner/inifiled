@@ -13,8 +13,7 @@ import initest;
 
 import inifile;
 
-@INI("A child must have a parent")
-struct Child {
+@INI("A child must have a parent") struct Child {
 	@INI("The firstname of the child")
 	string firstname;
 
@@ -22,11 +21,7 @@ struct Child {
 	int age;
 }
 
-@INI("A Spose")
-struct Spose {
-	@INI("The firstname of the spose")
-	string firstname;
-
+@INI("A Spose") struct Spose {
 	@INI("The age of the spose")
 	int age;
 
@@ -34,25 +29,14 @@ struct Spose {
 	House house;
 }
 
-@INI("A Dog")
-struct Dog {
+@INI("A Dog") struct Dog {
 	@INI("The name of the Dog")
 	string name;
-
-	@INI("The food consumed")
-	float kg;
 }
 
-@INI("A Person")
-struct Person {
-	@INI("The firstname of the Person")
-	string firstname;
-	
+@INI("A Person") struct Person {
 	@INI("The lastname of the Person")
 	string lastname;
-
-	@INI("The age of the Person")
-	int age;
 
 	@INI("The height of the Person")
 	float height;
@@ -62,16 +46,11 @@ struct Person {
 	)
 	string[] someStrings;
 
-	@INI("Some ints")
-	int[] someInts;
-
 	int dontShowThis;
 
-	@INI("A Spose")
-	Spose spose;
+	@INI("A Spose") Spose spose;
 
-	@INI("The family dog")
-	Dog dog;
+	@INI("The family dog") Dog dog;
 }
 
 @INI("A House")
@@ -86,35 +65,34 @@ struct House {
 
 ```d
 import initest;
+import inifile;
+
 import std.string;
-import std.stdio;
 
 void main() {
 	Person p;
-	p.firstname = "Foo";
-	p.lastname = "Bar";
-	p.age = 1337;
-	p.height = 7331.0;
+	p.lastname = "Mike";
+	p.height = 181.7;
 
 	p.someStrings ~= "Hello";
 	p.someStrings ~= "World";
 
-	p.someInts ~= [1,2];
-
-	p.spose.firstname = "World";
+	p.spose.firstname = "Molly";
 	p.spose.age = 72;
 
 	p.spose.house.rooms = 5;
 	p.spose.house.floors = 2;
 
 	p.dog.name = "Wuff";
-	p.dog.kg = 3.14;
 
+	// Here the ini file is written
 	writeINIFile(p, "filename.ini");
+
+	// Here the ini file is read
 	Person p2;
 	readINIFile(p2, "filename.ini");
 
+	// They should be the same
 	assert(p == p2, format("%s\n%s", p, p2));
-	writeln(p2);
 }
 ```
