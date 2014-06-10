@@ -14,52 +14,45 @@ import initest;
 import inifile;
 
 @INI("A child must have a parent") struct Child {
-	@INI("The firstname of the child")
-	string firstname;
+	@INI("The firstname of the child") string firstname;
 
-	@INI("The age of the child")
-	int age;
+	@INI("The age of the child") int age;
 }
 
 @INI("A Spose") struct Spose {
-	@INI("The age of the spose")
-	int age;
+	@INI("The age of the spose") int age;
 
-	@INI("The House of the spose")
-	House house;
+	// REGARD the nesting
+	@INI("The House of the spose") House house;
 }
 
 @INI("A Dog") struct Dog {
-	@INI("The name of the Dog")
-	string name;
+	@INI("The name of the Dog") string name;
 }
 
 @INI("A Person") struct Person {
-	@INI("The lastname of the Person")
-	string lastname;
+	@INI("The lastname of the Person") string lastname;
 
-	@INI("The height of the Person")
-	float height;
+	@INI("The height of the Person") float height;
 
 	@INI("Some strings with a very long long INI description that is longer" ~
 		" than eigthy lines hopefully."
-	)
-	string[] someStrings;
+	) string[] someStrings;
 
 	int dontShowThis;
 
+	// REGARD the nesting
 	@INI("A Spose") Spose spose;
 
+	// REGARD the nesting
 	@INI("The family dog") Dog dog;
 }
 
 @INI("A House")
 struct House {
-	@INI("Number of Rooms")
-	uint rooms;
+	@INI("Number of Rooms") uint rooms;
 
-	@INI("Number of Floors")
-	uint floors;
+	@INI("Number of Floors") uint floors;
 }
 ```
 
