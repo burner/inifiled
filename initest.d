@@ -18,6 +18,18 @@ struct Spose {
 
 	@INI("The age of the spose")
 	int age;
+
+	@INI("The House of the spose")
+	House house;
+}
+
+@INI("A Dog")
+struct Dog {
+	@INI("The name of the Dog")
+	string name;
+
+	@INI("The food consumed")
+	float kg;
 }
 
 @INI("A Person")
@@ -34,7 +46,6 @@ struct Person {
 	@INI("The height of the Person")
 	float height;
 
-	/*
 	@INI("Some strings with a very long long INI description that is longer" ~
 		" than eigthy lines hopefully."
 	)
@@ -42,10 +53,21 @@ struct Person {
 
 	@INI("Some ints")
 	int[] someInts;
-	*/
 
 	int dontShowThis;
 
 	@INI("A Spose")
 	Spose spose;
+
+	@INI("The family dog")
+	Dog dog;
+}
+
+@INI("A House")
+struct House {
+	@INI("Number of Rooms")
+	uint rooms;
+
+	@INI("Number of Floors")
+	uint floors;
 }

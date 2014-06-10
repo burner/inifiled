@@ -130,6 +130,10 @@ pure string getValue(T)(T line) @safe if(isInputRange!T) {
 	return getTimpl!('"','"')(line);
 }
 
+pure string getValueArray(T)(T line) @safe if(isInputRange!T) {
+	return getTimpl!('"','"')(line);
+}
+
 unittest {
 	assert(getValue("firstname=\"Foo\"") == "Foo");
 	assert(getValue("firstname=\"Foo\",\"Bar\"") == "Foo\",\"Bar");
@@ -169,6 +173,7 @@ unittest {
 		getSection("[initest.Person]"));
 	assert(getSection("[initest.Person] ") == "initest.Person",
 		getSection("[initest.Person]"));
+
 	assert(getValue("\"initest.Person\"") == "initest.Person",
 		getValue("\"initest.Person\""));
 	assert(getValue(" \"initest.Person\"") == "initest.Person",
@@ -180,63 +185,88 @@ unittest {
 }
 
 string buildSectionParse(T)() @safe {
-	string ret = "switch(getSection(line)) {\n";
+	string ret = "switch(getSection(line)) { // " ~ fullyQualifiedName!T ~ "\n";
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T, it) && !isBasicType!(typeof(__traits(getMember, T, it))) 
 			&& !isSomeString!(typeof(__traits(getMember, T, it))) 
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
-			ret ~= ("case \"%s\": readINIFileImpl(t.%s, input); break;\n").
+			ret ~= ("case \"%s\": { line = readINIFileImpl" ~
+					"(t.%s, input, deaph+1); goto repeatL; }\n").
 				format(fullyQualifiedName!(typeof(__traits(getMember, T, it))),
 					it
 				);
 		}
 	}
 
-	return ret ~ "default: break;\n}\n";
+	return ret ~ "default: return line;\n}\n";
 }
 
 string buildValueParse(T)() @safe {
-	string ret = "switch(getKey(line.idup)) {\n";
+	string ret = "switch(getKey(line)) { // " ~ fullyQualifiedName!T ~ "\n";
 
 	foreach(it; __traits(allMembers, T)) {
 		if(isINI!(T, it) && (isBasicType!(typeof(__traits(getMember, T, it))) 
 			|| isSomeString!(typeof(__traits(getMember, T, it)))))
 		{
-			ret ~= ("case \"%s\": t.%s = to!(typeof(t.%s))("
-				~ "getValue(line)); break;\n").format(it, it, it);
+			ret ~= ("case \"%s\": { t.%s = to!(typeof(t.%s))("
+				~ "getValue(line)); break; }\n").format(it, it, it);
+		} else if(isINI!(T, it) && 
+				isArray!(typeof(__traits(getMember, T, it)))) 
+		{
+			ret ~= ("case \"%s\": { t.%s = to!(typeof(t.%s))("
+				~ "getValueArray(line).split(',')); break; }\n").format(it, it, it);
 		}
 	}
 
 	return ret ~ "default: break;\n}\n";
 }
 
-void readINIFileImpl(T,IRange)(ref T t, ref IRange input) {
-	writefln("%d %s", __LINE__, fullyQualifiedName!(typeof(t)));
+string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
+		if(isInputRange!IRange) 
+{
+	debug {
+		writefln("%*s%d %s %x", deaph, "", __LINE__, fullyQualifiedName!(typeof(t)),
+			cast(void*)&input);
+	}
 	//foreach(line; input) {
-	ElementType!IRange line;
+	//ElementType!IRange line;
+	string line;
 	while(!input.empty()) {
-		line = input.front();
+		line = input.front().idup;
 		input.popFront();
 
+		repeatL:
 		if(line.startsWith(";")) {
 			continue;
 		}
-		writefln("%d %s %s %b", __LINE__, line, fullyQualifiedName!T, 
-			isSection(line));
+		debug {
+			writefln("%*s%d %s %s %b", deaph, "", __LINE__, line, fullyQualifiedName!T, 
+				isSection(line));
+		}
 
-		if(isKeyValue(line)) {
-			pragma(msg, buildValueParse!(T));
-			writefln("%d %s %s", __LINE__, getKey(line.idup), 
-				getValue(line.idup));
-			mixin(buildValueParse!(T));
-		} else if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
-			writefln("%d %s", __LINE__, getSection(line));
-			pragma(msg, buildSectionParse!(T));
+		if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
+			debug {
+				pragma(msg, buildSectionParse!(T));
+				writefln("%*s%d %s", deaph, "", __LINE__, getSection(line));
+				writefln("%*s%d %x", deaph, "", __LINE__, 
+					cast(void*)&input);
+			}
+			
 			mixin(buildSectionParse!(T));
+		} else if(isKeyValue(line)) {
+			debug {
+				pragma(msg, buildValueParse!(T));
+				writefln("%*s%d %s %s", deaph, "", __LINE__, getKey(line), 
+					getValue(line));
+			}
+			
+			mixin(buildValueParse!(T));
 		}
 	}
+
+	return line;
 }
 
 void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted 
@@ -275,11 +305,11 @@ string removeFromLastPoint(string input) @safe {
 }
 
 void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted 
-	if(isOutputRange!(ORange, string)) //&& isArray!(T))
+	if(isOutputRange!(ORange, string))
 {
 	static if(isSomeString!(ElementType!T) || isBasicType!(ElementType!T)) {
 		oRange.formattedWrite("%s=\"%s\"\n", removeFromLastPoint(name), 
-			joiner(value.map!(a => to!string(a)), "\",\"")
+			joiner(value.map!(a => to!string(a)), ",")
 		);
 	} else {
 		for(size_t i = 0; i < value.length; ++i) {
