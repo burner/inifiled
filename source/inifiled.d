@@ -1,4 +1,4 @@
-module inifile;
+module inifiled;
 
 import std.algorithm;
 import std.exception;
