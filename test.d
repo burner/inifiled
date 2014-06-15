@@ -1,4 +1,4 @@
-import inifile;
+import inifiled;
 
 import initest;
 import std.string;
@@ -31,4 +31,6 @@ void main() {
 
 	assert(p == p2, format("%s\n%s", p, p2));
 	writeln(p2);
+
+	readINIFile(p2, "filenamefoobar.ini");
 }

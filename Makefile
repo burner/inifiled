@@ -1,2 +1,2 @@
 all: *.d Makefile
-	dmd *.d -ofinitest -unittest -debug -gc -w
+	dmd *.d -ofinitest -Isource -unittest -gc -w

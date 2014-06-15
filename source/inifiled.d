@@ -81,7 +81,12 @@ string buildStructParser(T)() {
 }
 
 void readINIFile(T)(ref T t, string filename) {
-	auto iFile = File(filename, "r");
+	File iFile;
+    try {
+		iFile = File(filename, "r");
+	} catch(Exception e) {
+		return;
+	}
 	auto iRange = iFile.byLine();
 	readINIFileImpl(t, iRange);
 }
@@ -248,7 +253,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 
 		if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
 			debug {
-				pragma(msg, buildSectionParse!(T));
+				//pragma(msg, buildSectionParse!(T));
 				writefln("%*s%d %s", deaph, "", __LINE__, getSection(line));
 				writefln("%*s%d %x", deaph, "", __LINE__, 
 					cast(void*)&input);
@@ -257,7 +262,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 			mixin(buildSectionParse!(T));
 		} else if(isKeyValue(line)) {
 			debug {
-				pragma(msg, buildValueParse!(T));
+				//pragma(msg, buildValueParse!(T));
 				writefln("%*s%d %s %s", deaph, "", __LINE__, getKey(line), 
 					getValue(line));
 			}

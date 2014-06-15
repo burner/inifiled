@@ -1,6 +1,6 @@
 import initest;
 
-import inifile;
+import inifiled;
 
 @INI("A child must have a parent")
 struct Child {
