@@ -1,4 +1,4 @@
-inifile-D
+inifiled
 =========
 
 A compile time ini file parser and writter generator for D.
