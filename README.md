@@ -11,7 +11,7 @@ Example
 ```d
 import initest;
 
-import inifile;
+import inifiled;
 
 @INI("A child must have a parent") 
 struct Child {
@@ -62,7 +62,7 @@ struct House {
 
 ```d
 import initest;
-import inifile;
+import inifiled;
 
 import std.string;
 
