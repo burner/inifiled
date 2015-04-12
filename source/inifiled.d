@@ -81,12 +81,7 @@ string buildStructParser(T)() {
 }
 
 void readINIFile(T)(ref T t, string filename) {
-	File iFile;
-    try {
-		iFile = File(filename, "r");
-	} catch(Exception e) {
-		return;
-	}
+	auto iFile = File(filename, "r");
 	auto iRange = iFile.byLine();
 	readINIFileImpl(t, iRange);
 }
