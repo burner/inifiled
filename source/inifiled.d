@@ -291,8 +291,18 @@ void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
 void writeValue(ORange,T)(ORange orange, string name, T value) @trusted 
 	if(isOutputRange!(ORange, string))
 {
-
-	orange.formattedWrite("%s=\"%s\"\n", name, value);
+	static if(isArray!T && !isSomeString!T) {
+		orange.formattedWrite("%s=\"", name);
+		foreach(idx, it; value) {
+			if(idx != 0) {
+				orange.put(',');
+			} 
+			orange.formattedWrite("%s", it);
+		}
+		orange.formattedWrite("\"");
+	} else {
+		orange.formattedWrite("%s=\"%s\"\n", name, value);
+	}
 }
 
 string removeFromLastPoint(string input) @safe {
@@ -308,9 +318,15 @@ void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted
 	if(isOutputRange!(ORange, string))
 {
 	static if(isSomeString!(ElementType!T) || isBasicType!(ElementType!T)) {
-		oRange.formattedWrite("%s=\"%s\"\n", removeFromLastPoint(name), 
-			joiner(value.map!(a => to!string(a)), ",")
-		);
+		oRange.formattedWrite("%s=\"", removeFromLastPoint(name));
+		foreach(idx, it; value) {
+			if(idx != 0) {
+				oRange.put(',');
+			} 
+			oRange.formattedWrite("%s", it);
+		}
+		oRange.put('"');
+		oRange.put('\n');
 	} else {
 		for(size_t i = 0; i < value.length; ++i) {
 			oRange.formattedWrite("[%s]\n", name);

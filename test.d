@@ -16,6 +16,7 @@ void main() {
 
 	p.someInts ~= [1,2];
 
+	/*
 	p.spose.firstname = "World";
 	p.spose.age = 72;
 
@@ -24,6 +25,7 @@ void main() {
 
 	p.dog.name = "Wuff";
 	p.dog.kg = 3.14;
+	*/
 
 	writeINIFile(p, "filename.ini");
 	Person p2;

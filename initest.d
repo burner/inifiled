@@ -49,18 +49,18 @@ struct Person {
 	@INI("Some strings with a very long long INI description that is longer" ~
 		" than eigthy lines hopefully."
 	)
-	string[] someStrings;
+	string[] someStrings = [":::60180", "asd"];
 
 	@INI("Some ints")
 	int[] someInts;
 
 	int dontShowThis;
 
-	@INI("A Spose")
-	Spose spose;
+	//@INI("A Spose")
+	//Spose spose;
 
-	@INI("The family dog")
-	Dog dog;
+	//@INI("The family dog")
+	//Dog dog;
 }
 
 @INI("A House")
