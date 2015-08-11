@@ -30,7 +30,6 @@ bool isINI(T)() @trusted {
 			return true;
 		}
 	}
-	return false;
 }
 
 bool isINI(T, string mem)() @trusted {
@@ -39,7 +38,6 @@ bool isINI(T, string mem)() @trusted {
 			return true;
 		}
 	}
-	return false;
 }
 
 string getINI(T)() @trusted {
