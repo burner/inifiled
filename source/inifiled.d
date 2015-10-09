@@ -24,22 +24,18 @@ struct INI {
 	}
 }
 
-bool isINI(T)() @trusted {
-	foreach(it; __traits(getAttributes, T)) {
-		if(is(typeof(it) == INI)) {
-			return true;
-		}
-	}
-	return false;
+template isINI(T) {
+	import std.meta : anySatisfy;
+	enum i(alias U) = is(U == INI);
+	enum isINI = anySatisfy!(i, __traits(getAttributes, T));
 }
 
-bool isINI(T, string mem)() @trusted {
-	foreach(it; __traits(getAttributes, __traits(getMember, T, mem))) {
-		if(is(typeof(it) == INI)) {
-			return true;
-		}
-	}
-	return false;
+template isINI(T, string mem) {
+	import std.meta : anySatisfy;
+	enum i(alias U) = is(U == INI);
+	enum isINI = anySatisfy!(i, __traits(getAttributes, 
+		__traits(getMember, T, mem))
+	);
 }
 
 string getINI(T)() @trusted {
