@@ -29,7 +29,7 @@ template isINI(T) {
 		import std.meta : anySatisfy;
 	else
 		import std.typetuple : anySatisfy;
-	enum i(alias U) = is(U == INI);
+	enum i(alias U) = is(typeof(U) == INI);
 	enum isINI = anySatisfy!(i, __traits(getAttributes, T));
 }
 
@@ -38,8 +38,8 @@ template isINI(T, string mem) {
 		import std.meta : anySatisfy;
 	else
 		import std.typetuple : anySatisfy;
-	enum i(alias U) = is(U == INI);
-	enum isINI = anySatisfy!(i, __traits(getAttributes, 
+	enum i(alias U) = is(typeof(U) == INI);
+	enum isINI = anySatisfy!(i, __traits(getAttributes,
 		__traits(getMember, T, mem))
 	);
 }
