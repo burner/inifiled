@@ -16,7 +16,6 @@ void main() {
 
 	p.someInts ~= [1,2];
 
-	/*
 	p.spose.firstname = "World";
 	p.spose.age = 72;
 
@@ -25,14 +24,15 @@ void main() {
 
 	p.dog.name = "Wuff";
 	p.dog.kg = 3.14;
-	*/
 
-	writeINIFile(p, "filename.ini");
 	Person p2;
 	readINIFile(p2, "filename.ini");
+	writeINIFile(p2, "filenameTmp.ini");
 
+	Person p3;
+	readINIFile(p3, "filenameTmp.ini");
+
+	assert(p2 == p3, format("%s\n%s", p2, p3));
+	assert(p == p3, format("%s\n%s", p, p3));
 	assert(p == p2, format("%s\n%s", p, p2));
-	writeln(p2);
-
-	readINIFile(p2, "filenamefoobar.ini");
 }

@@ -56,11 +56,11 @@ struct Person {
 
 	int dontShowThis;
 
-	//@INI("A Spose")
-	//Spose spose;
+	@INI("A Spose")
+	Spose spose;
 
-	//@INI("The family dog")
-	//Dog dog;
+	@INI("The family dog")
+	Dog dog;
 }
 
 @INI("A House")
