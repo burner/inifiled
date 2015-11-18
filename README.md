@@ -26,7 +26,7 @@ struct Child {
 struct Spose {
 	@INI("The age of the spose") int age;
 
-	// REGARD the nesting
+	// Nesting
 	@INI("The House of the spose") House house;
 }
 
