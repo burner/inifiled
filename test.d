@@ -1,8 +1,7 @@
 import inifiled;
 
 import initest;
-import std.string;
-import std.stdio;
+import std.format : format;
 
 void main() {
 	Person p;
