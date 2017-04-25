@@ -1,21 +1,20 @@
 language: d
 sudo: false
 
-matrix:
-  include:
-    - d: dmd-2.067.0
-    - d: dmd-2.068.0
-    - d: dmd-2.069.0
-    - d: dmd-2.070.2
-    - d: dmd-2.071.2
-    - d: dmd-2.072.2
-    - d: dmd-2.073.2
-    - d: ldc-1.0.0
-    - d: ldc-1.1.1
+d:
+  - dmd
+  - ldc
+  - dmd-2.069.0
+  - dmd-2.070.2
+  - dmd-2.071.2
+  - dmd-2.072.2
+  - dmd-2.073.2
+  - dmd-2.074.0
+  - ldc-1.0.0
+  - ldc-1.1.1
 
 script:
-  - make
-  - ./initest
+  - dub test
 
 notifications:
   email: false
