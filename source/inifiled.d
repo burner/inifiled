@@ -220,10 +220,10 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 {
 	import std.conv : to;
 	import std.string : split;
+	import std.algorithm.searching : startsWith;
+	import std.traits : fullyQualifiedName;
 	debug {
 		import std.stdio : writefln;
-		import std.traits : fullyQualifiedName;
-		import std.algorithm.searching : startsWith;
 	}
 	debug {
 		writefln("%*s%d %s %x", deaph, "", __LINE__, fullyQualifiedName!(typeof(t)),
