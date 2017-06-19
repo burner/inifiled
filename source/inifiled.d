@@ -173,8 +173,9 @@ unittest {
 string buildSectionParse(T)() @safe {
 	import std.traits : hasUDA, fullyQualifiedName, isBasicType, isSomeString,
 		   isArray;
+	import std.array : join;
 	import std.format : format;
-	string ret = "switch(getSection(line)) { // " ~ fullyQualifiedName!T ~ "\n";
+	string[] ret;
 
 	foreach(it; __traits(allMembers, T)) {
 		if(hasUDA!(__traits(getMember, T, it), INI) 
@@ -183,14 +184,20 @@ string buildSectionParse(T)() @safe {
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
 			ret ~= ("case \"%s\": { line = readINIFileImpl" ~
-					"(t.%s, input, deaph+1); goto repeatL; }\n").
+					"(t.%s, input, deaph+1); } ").
 				format(fullyQualifiedName!(typeof(__traits(getMember, T, it))),
 					it
 				);
 		}
 	}
 
-	return ret ~ "default: return line;\n}\n";
+	// Avoid DMD switch fallthrough warnings
+	if (ret.length) {
+		return "switch(getSection(line)) { // " ~ fullyQualifiedName!T ~ "\n" ~
+			ret.join("goto case; \n") ~ "goto default;\n default: return line;\n}\n";
+	} else {
+		return "return line;";
+	}
 }
 
 string buildValueParse(T)() @safe {
@@ -234,7 +241,6 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 		line = input.front().idup;
 		input.popFront();
 
-		repeatL:
 		if(line.startsWith(";")) {
 			continue;
 		}
@@ -536,4 +542,38 @@ unittest {
 		writefln("Dog equal %b", p.dog == p2.dog);
 		assert(false);
 	}	
+}
+
+version(unittest) {
+	enum Check : string { disabled = "disabled"}
+
+	@INI
+	struct StaticAnalysisConfig {
+		@INI
+		string style_check = Check.disabled;
+
+		@INI
+		ModuleFilters filters;
+	}
+
+	private template ModuleFiltersMixin(A) {
+		const string ModuleFiltersMixin = () {
+			string s;
+			foreach (mem; __traits(allMembers, StaticAnalysisConfig))
+				static if (is(typeof(__traits(getMember, StaticAnalysisConfig, mem)) == string))
+					s ~= `@INI string[] ` ~ mem ~ ";\n";
+
+			return s;
+		}();
+	}
+
+	@INI
+	struct ModuleFilters { mixin(ModuleFiltersMixin!int); }
+}
+
+unittest {
+	StaticAnalysisConfig config;
+	readINIFile(config, "test/dscanner.ini");
+	assert(config.style_check == "disabled");
+	assert(config.filters.style_check == ["+std.algorithm"]);
 }
