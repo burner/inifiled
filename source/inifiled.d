@@ -511,12 +511,12 @@ unittest {
 	p.dog.kg = 3.14;
 
 	Person p2;
-	readINIFile(p2, "filename.ini");
+	readINIFile(p2, "test/filename.ini");
 	writefln("\n%s\n", p2);
-	writeINIFile(p2, "filenameTmp.ini");
+	writeINIFile(p2, "test/filenameTmp.ini");
 
 	Person p3;
-	readINIFile(p3, "filenameTmp.ini");
+	readINIFile(p3, "test/filenameTmp.ini");
 
 	if(p2 != p3) {
 		writefln("\n%s\n%s", p2, p3);
