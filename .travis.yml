@@ -12,7 +12,7 @@ d:
   - dmd-2.074.1
 
 script:
-  - dub test
+  - dub test --compiler=${DC}
 
 notifications:
   email: false
