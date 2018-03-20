@@ -237,11 +237,27 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 			cast(void*)&input);
 	}
 	string line;
+	bool isMultiLine;
 	while(!input.empty()) {
-		line = input.front().idup;
+		import std.algorithm : endsWith;
+		import std.string : stripRight;
+		bool wasMultiLine = isMultiLine;
+		auto currentLine = input.front.stripRight;
+		isMultiLine = currentLine.endsWith(`\`);
+		// remove backslash if existent
+		if (isMultiLine) {
+			currentLine = currentLine[0 .. $ - 1];
+		}
+
+		if (wasMultiLine) {
+			line ~= currentLine;
+		} else {
+			line = currentLine.idup;
+		}
+
 		input.popFront();
 
-		if(line.startsWith(";")) {
+		if(line.startsWith(";") || isMultiLine) {
 			continue;
 		}
 		debug {
@@ -554,6 +570,9 @@ version(unittest) {
 
 		@INI
 		ModuleFilters filters;
+
+		@INI
+		string multi_line;
 	}
 
 	private template ModuleFiltersMixin(A) {
@@ -575,5 +594,6 @@ unittest {
 	StaticAnalysisConfig config;
 	readINIFile(config, "test/dscanner.ini");
 	assert(config.style_check == "disabled");
+	assert(config.multi_line == `+std.algorithm -std.foo `);
 	assert(config.filters.style_check == ["+std.algorithm"]);
 }
