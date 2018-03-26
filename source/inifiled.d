@@ -22,9 +22,10 @@ struct INI {
 INI getINI(T)() @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, T)) {
-		if(hasUDA!(T, INI)) {
+		static if (is(it == INI))
+			return INI(null, null);
+		static if (is(typeof(it) == INI))
 			return it;
-		}
 	}
 	assert(false);
 }
@@ -32,9 +33,10 @@ INI getINI(T)() @trusted {
 INI getINI(T, string mem)() @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, __traits(getMember, T, mem))) {
-		if(hasUDA!(__traits(getMember, T, mem), INI)) {
+		static if (is(it == INI))
+			return INI(null, null);
+		static if (is(typeof(it) == INI))
 			return it;
-		}
 	}
 	assert(false, mem);
 }
@@ -42,23 +44,6 @@ INI getINI(T, string mem)() @trusted {
 string getTypeName(T)() @trusted {
 	import std.traits : fullyQualifiedName;
 	return fullyQualifiedName!T;
-}
-
-string buildStructParser(T)() {
-	import std.traits : hasUDA;
-	string ret = "switch(it) { \n";
-	foreach(it; __traits(allMembers, T)) {
-		if(hasUDA!(__traits(getMember, T, it), INI) && (
-			isBasicType!(typeof(__traits(getMember, T, it))) ||
-			isSomeString!(typeof(__traits(getMember, T, it))))
-		) {
-			ret ~=
-				"case \"%s\": t.%s = to!typeof(t.%s)(it); break; %s"
-				.format(it, it, it, "\n");
-		}
-	}
-
-	return ret;
 }
 
 void readINIFile(T)(ref T t, string filename) {
@@ -185,11 +170,16 @@ string buildSectionParse(T)() @safe {
 			&& !isSomeString!(typeof(__traits(getMember, T, it)))
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
+			alias MemberType = typeof(__traits(getMember, T, it));
+			static if (__traits(compiles, getINI!(MemberType)))
+				const name = getINI!(MemberType).name is null
+					? fullyQualifiedName!(typeof(__traits(getMember, T, it)))
+					: getINI!(MemberType).name;
+			else
+				const name = fullyQualifiedName!(typeof(__traits(getMember, T, it)));
 			ret ~= ("case \"%s\": { line = readINIFileImpl" ~
 					"(t.%s, input, depth+1); } ").
-				format(fullyQualifiedName!(typeof(__traits(getMember, T, it))),
-					it
-				);
+				format(name,it);
 		}
 	}
 
@@ -211,13 +201,15 @@ string buildValueParse(T)() @safe {
 		if(hasUDA!(__traits(getMember, T, it), INI) && (isBasicType!(typeof(__traits(getMember, T, it)))
 			|| isSomeString!(typeof(__traits(getMember, T, it)))))
 		{
+			const string name = getINI!(T, it).name is null ? it : getINI!(T, it).name;
 			ret ~= ("case \"%s\": { t.%s = to!(typeof(t.%s))("
-				~ "getValue(line)); break; }\n").format(it, it, it);
+				~ "getValue(line)); break; }\n").format(name, it, it);
 		} else if(hasUDA!(__traits(getMember, T, it), INI)
 				&& isArray!(typeof(__traits(getMember, T, it))))
 		{
+			const string name = getINI!(T, it).name is null ? it : getINI!(T, it).name;
 			ret ~= ("case \"%s\": { t.%s = to!(typeof(t.%s))("
-				~ "getValueArray(line).split(',')); break; }\n").format(it, it, it);
+				~ "getValueArray(line).split(',')); break; }\n").format(name, it, it);
 		}
 	}
 
@@ -230,7 +222,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 	import std.conv : to;
 	import std.string : split;
 	import std.algorithm.searching : startsWith;
-	import std.traits : fullyQualifiedName;
+	import std.traits : hasUDA, fullyQualifiedName;
 	debug {
 		import std.stdio : writefln;
 	}
@@ -243,7 +235,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 	while(!input.empty()) {
 		import std.algorithm : endsWith;
 		import std.string : stripRight;
-		bool wasMultiLine = isMultiLine;
+		immutable bool wasMultiLine = isMultiLine;
 		auto currentLine = input.front.stripRight;
 		isMultiLine = currentLine.endsWith(`\`);
 		// remove backslash if existent
@@ -267,9 +259,13 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 				isSection(line));
 		}
 
-		if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
+		static if (hasUDA!(T, INI))
+			const name = getINI!T().name is null ? fullyQualifiedName!T : getINI!T().name;
+		else
+			const name = fullyQualifiedName!T;
+		if(isSection(line) && getSection(line) != name) {
 			debug {
-				//pragma(msg, buildSectionParse!(T));
+				pragma(msg, buildSectionParse!(T));
 				writefln("%*s%d %s", depth, "", __LINE__, getSection(line));
 				writefln("%*s%d %x", depth, "", __LINE__,
 					cast(void*)&input);
@@ -278,7 +274,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 			mixin(buildSectionParse!(T));
 		} else if(isKeyValue(line)) {
 			debug {
-				//pragma(msg, buildValueParse!(T));
+				pragma(msg, buildValueParse!(T));
 				writefln("%*s%d %s %s", depth, "", __LINE__, getKey(line),
 					getValue(line));
 			}
@@ -374,9 +370,6 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 	import std.traits : getUDAs, hasUDA, Unqual, isArray, isBasicType,
 		   isSomeString;
 	import std.format : formattedWrite;
-	debug {
-		import std.stdio : writeln;
-	}
 	if(hasUDA!(T, INI) && section) {
 		writeComment(oRange, getINI!T().msg);
 	}
@@ -399,15 +392,13 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 			static if(isBasicType!(typeof(__traits(getMember, T, it))) ||
 				isSomeString!(typeof(__traits(getMember, T, it))))
 			{
-				auto ini = getINI!(T,it);
-				auto name = ini.name is null ? it : ini.name;
-				debug writeln(">>>", it, " ", ini.name, " ", name);
+				const ini = getINI!(T,it);
+				const name = ini.name is null ? it : ini.name;
 				writeComment(oRange, ini.msg);
 				writeValue(oRange, name, __traits(getMember, t, it));
 			} else static if(isArray!(typeof(__traits(getMember, T, it)))) {
-				auto ini = getINI!(T,it);
-				auto name = getTypeName!T ~ "." ~ (ini.name is null ? it : ini.name);
-				debug writeln(">>>", it, " ", ini.name, " ", name);
+				const ini = getINI!(T,it);
+				const name = getTypeName!T ~ "." ~ (ini.name is null ? it : ini.name);
 				writeComment(oRange, ini.msg);
 				writeValues(oRange, name, __traits(getMember, t, it));
 			//} else static if(isINI!(typeof(__traits(getMember, t, it)))) {
@@ -434,18 +425,18 @@ struct Child {
 	}
 }
 
-@INI("A Spose")
-struct Spose {
-	@INI("The firstname of the spose")
+@INI("A Spouse")
+struct Spouse {
+	@INI("The firstname of the spouse")
 	string firstname;
 
-	@INI("The age of the spose")
+	@INI("The age of the spouse")
 	int age;
 
-	@INI("The House of the spose")
+	@INI("The House of the spouse")
 	House house;
 
-	bool opEquals(Spose other) {
+	bool opEquals(Spouse other) {
 		return this.firstname == other.firstname
 			&& this.age == other.age
 			&& this.house == other.house;
@@ -493,8 +484,8 @@ struct Person {
 
 	int dontShowThis;
 
-	@INI("A Spose")
-	Spose spose;
+	@INI("A Spouse")
+	Spouse spouse;
 
 	@INI("The family dog")
 	Dog dog;
@@ -509,7 +500,7 @@ struct Person {
 				|| (isNaN(this.height) && isNaN(other.height)))
 			&& equal(this.someStrings, other.someStrings)
 			&& equal(this.someInts, other.someInts)
-			&& this.spose == other.spose
+			&& this.spouse == other.spouse
 			&& this.dog == other.dog;
 	}
 }
@@ -542,11 +533,11 @@ unittest {
 
 	p.someInts ~= [1,2];
 
-	p.spose.firstname = "World";
-	p.spose.age = 72;
+	p.spouse.firstname = "World";
+	p.spouse.age = 72;
 
-	p.spose.house.rooms = 5;
-	p.spose.house.floors = 2;
+	p.spouse.house.rooms = 5;
+	p.spouse.house.floors = 2;
 
 	p.dog.name = "Wuff";
 	p.dog.kg = 3.14;
@@ -561,19 +552,19 @@ unittest {
 
 	if(p2 != p3) {
 		writefln("\n%s\n%s", p2, p3);
-		writefln("Spose equal %b", p2.spose == p3.spose);
+		writefln("Spouse equal %b", p2.spouse == p3.spouse);
 		writefln("Dog equal %b", p2.dog == p3.dog);
 		assert(false);
 	}
 	if(p != p3) {
 		writefln("\n%s\n%s", p, p3);
-		writefln("Spose equal %b", p.spose == p3.spose);
+		writefln("Spouse equal %b", p.spouse == p3.spouse);
 		writefln("Dog equal %b", p.dog == p3.dog);
 		assert(false);
 	}
 	if(p != p2) {
 		writefln("\n%s\n%s", p, p2);
-		writefln("Spose equal %b", p.spose == p2.spose);
+		writefln("Spouse equal %b", p.spouse == p2.spouse);
 		writefln("Dog equal %b", p.dog == p2.dog);
 		assert(false);
 	}
@@ -590,7 +581,7 @@ version(unittest) {
 		@INI
 		ModuleFilters filters;
 
-		@INI
+		@INI @ConfuseTheParser
 		string multi_line;
 	}
 
@@ -617,17 +608,34 @@ unittest {
 	assert(config.filters.style_check == ["+std.algorithm"]);
 }
 
+version (unittest)
+struct ConfuseTheParser;
+
 unittest {
+	@INI("Reactor Configuration", "reactorConfig")
+	struct NukeConfig
+	{
+		@INI double a;
+		@INI double b;
+		@INI double c;
+	}
+
 	@INI("General Configuration", "general")
 	struct Configuration
 	{
 		@INI("Color of the bikeshed", "shedColor") string shedC;
+		@INI @ConfuseTheParser NukeConfig nConfig;
 	}
 
 	Configuration c = Configuration("blue");
+	c.nConfig.a = 1;
+	c.nConfig.b = 2;
+	c.nConfig.c = 3;
 	c.writeINIFile("test/bikeShed.ini");
 	Configuration c2;
 	readINIFile(c2, "test/bikeShed.ini");
-	import std.stdio;
-	writeln(c2);
+	assert(c2.shedC == "blue");
+	assert(c2.nConfig.a == 1);
+	assert(c2.nConfig.b == 2);
+	assert(c2.nConfig.c == 3);
 }
