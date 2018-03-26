@@ -26,3 +26,4 @@
 .dub
 inifiled-test-library
 test/filenameTmp.ini
+test/bikeShed.ini
