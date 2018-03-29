@@ -22,9 +22,9 @@ struct INI {
 INI getINI(T)() @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, T)) {
-		static if (is(it == INI))
+		static if(is(it == INI))
 			return INI(null, null);
-		static if (is(typeof(it) == INI))
+		static if(is(typeof(it) == INI))
 			return it;
 	}
 	assert(false);
@@ -33,9 +33,9 @@ INI getINI(T)() @trusted {
 INI getINI(T, string mem)() @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, __traits(getMember, T, mem))) {
-		static if (is(it == INI))
+		static if(is(it == INI))
 			return INI(null, null);
-		static if (is(typeof(it) == INI))
+		static if(is(typeof(it) == INI))
 			return it;
 	}
 	assert(false, mem);
@@ -171,7 +171,7 @@ string buildSectionParse(T)() @safe {
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
 			alias MemberType = typeof(__traits(getMember, T, it));
-			static if (__traits(compiles, getINI!(MemberType)))
+			static if(__traits(compiles, getINI!(MemberType)))
 				const name = getINI!(MemberType).name is null
 					? fullyQualifiedName!(typeof(__traits(getMember, T, it)))
 					: getINI!(MemberType).name;
@@ -184,7 +184,7 @@ string buildSectionParse(T)() @safe {
 	}
 
 	// Avoid DMD switch fallthrough warnings
-	if (ret.length) {
+	if(ret.length) {
 		return "switch(getSection(line)) { // " ~ fullyQualifiedName!T ~ "\n" ~
 			ret.join("goto case; \n") ~ "goto default;\n default: return line;\n}\n";
 	} else {
@@ -239,11 +239,11 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 		auto currentLine = input.front.stripRight;
 		isMultiLine = currentLine.endsWith(`\`);
 		// remove backslash if existent
-		if (isMultiLine) {
+		if(isMultiLine) {
 			currentLine = currentLine[0 .. $ - 1];
 		}
 
-		if (wasMultiLine) {
+		if(wasMultiLine) {
 			line ~= currentLine;
 		} else {
 			line = currentLine.idup;
@@ -259,7 +259,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 				isSection(line));
 		}
 
-		static if (hasUDA!(T, INI))
+		static if(hasUDA!(T, INI))
 			const name = getINI!T().name is null ? fullyQualifiedName!T : getINI!T().name;
 		else
 			const name = fullyQualifiedName!T;
@@ -375,9 +375,9 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 	}
 
 	if(section) {
-		if (hasUDA!(T, INI)) {
+		if(hasUDA!(T, INI)) {
 			auto ini = getINI!(T);
-			if (ini.name !is null) {
+			if(ini.name !is null) {
 				oRange.formattedWrite("[%s]\n", ini.name);
 			} else {
 				oRange.formattedWrite("[%s]\n", getTypeName!T);
@@ -589,7 +589,7 @@ version(unittest) {
 		const string ModuleFiltersMixin = () {
 			string s;
 			foreach (mem; __traits(allMembers, StaticAnalysisConfig))
-				static if (is(typeof(__traits(getMember, StaticAnalysisConfig, mem)) == string))
+				static if(is(typeof(__traits(getMember, StaticAnalysisConfig, mem)) == string))
 					s ~= `@INI string[] ` ~ mem ~ ";\n";
 
 			return s;
