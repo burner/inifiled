@@ -22,10 +22,12 @@ struct INI {
 INI getINI(T)() @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, T)) {
-		static if(is(it == INI))
+		static if(is(it == INI)) {
 			return INI(null, null);
-		static if(is(typeof(it) == INI))
+		}
+		static if(is(typeof(it) == INI)) {
 			return it;
+		}
 	}
 	assert(false);
 }
@@ -33,10 +35,12 @@ INI getINI(T)() @trusted {
 INI getINI(T, string mem)() @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, __traits(getMember, T, mem))) {
-		static if(is(it == INI))
+		static if(is(it == INI)) {
 			return INI(null, null);
-		static if(is(typeof(it) == INI))
+		}
+		static if(is(typeof(it) == INI)) {
 			return it;
+		}
 	}
 	assert(false, mem);
 }
@@ -171,15 +175,15 @@ string buildSectionParse(T)() @safe {
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
 			alias MemberType = typeof(__traits(getMember, T, it));
-			static if(__traits(compiles, getINI!(MemberType)))
+			static if(__traits(compiles, getINI!(MemberType))) {
 				const name = getINI!(MemberType).name is null
 					? fullyQualifiedName!(typeof(__traits(getMember, T, it)))
 					: getINI!(MemberType).name;
-			else
+			} else {
 				const name = fullyQualifiedName!(typeof(__traits(getMember, T, it)));
+			}
 			ret ~= ("case \"%s\": { line = readINIFileImpl" ~
-					"(t.%s, input, depth+1); } ").
-				format(name,it);
+					"(t.%s, input, depth+1); } ").format(name,it);
 		}
 	}
 
@@ -259,10 +263,11 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 				isSection(line));
 		}
 
-		static if(hasUDA!(T, INI))
+		static if(hasUDA!(T, INI)) {
 			const name = getINI!T().name is null ? fullyQualifiedName!T : getINI!T().name;
-		else
+		} else {
 			const name = fullyQualifiedName!T;
+		}
 		if(isSection(line) && getSection(line) != name) {
 			debug {
 				pragma(msg, buildSectionParse!(T));
@@ -401,9 +406,7 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 				const name = getTypeName!T ~ "." ~ (ini.name is null ? it : ini.name);
 				writeComment(oRange, ini.msg);
 				writeValues(oRange, name, __traits(getMember, t, it));
-			//} else static if(isINI!(typeof(__traits(getMember, t, it)))) {
-			} else static if(hasUDA!(__traits(getMember, t, it),INI))
-			{
+			} else static if(hasUDA!(__traits(getMember, t, it),INI)) {
 				writeINIFileImpl(__traits(getMember, t, it), oRange, true);
 			}
 		}
@@ -589,8 +592,14 @@ version(unittest) {
 		const string ModuleFiltersMixin = () {
 			string s;
 			foreach (mem; __traits(allMembers, StaticAnalysisConfig))
-				static if(is(typeof(__traits(getMember, StaticAnalysisConfig, mem)) == string))
+				static if(
+					is(
+						typeof(__traits(getMember, StaticAnalysisConfig, mem)) 
+						== string
+					)
+				) {
 					s ~= `@INI string[] ` ~ mem ~ ";\n";
+				}
 
 			return s;
 		}();
