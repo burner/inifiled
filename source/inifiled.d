@@ -375,16 +375,16 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 	}
 
 	if(section) {
-		if (hasUDA!(T, INI))
-		{
+		if (hasUDA!(T, INI)) {
 			auto ini = getINI!(T);
-			if (ini.name !is null)
+			if (ini.name !is null) {
 				oRange.formattedWrite("[%s]\n", ini.name);
-			else
+			} else {
 				oRange.formattedWrite("[%s]\n", getTypeName!T);
-		}
-		else
+			}
+		} else {
 			oRange.formattedWrite("[%s]\n", getTypeName!T);
+		}
 	}
 
 	foreach(it; __traits(allMembers, T)) {
