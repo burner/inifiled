@@ -6,5 +6,16 @@
 	"authors": ["Robert burner Schadek"],
 	"license": "LGPL3",
 	"importPaths": ["source"],
-	"sourcePaths": ["source"]
+	"sourcePaths": ["source"],
+	"configurations": [
+		{
+			"name": "library",
+			"targetType": "library",
+			"versions": ["debugLogs"]
+		},
+		{
+			"name": "library-quiet",
+			"targetType": "library"
+		}
+	]
 }
