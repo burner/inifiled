@@ -227,10 +227,10 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 	import std.string : split;
 	import std.algorithm.searching : startsWith;
 	import std.traits : hasUDA, fullyQualifiedName;
-	debug version (debugLogs) {
+	debug version(debugLogs) {
 		import std.stdio : writefln;
 	}
-	debug version (debugLogs) {
+	debug version(debugLogs) {
 		writefln("%*s%d %s %x", depth, "", __LINE__, fullyQualifiedName!(typeof(t)),
 			cast(void*)&input);
 	}
@@ -258,7 +258,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 		if(line.startsWith(";") || isMultiLine) {
 			continue;
 		}
-		debug version (debugLogs) {
+		debug version(debugLogs) {
 			writefln("%*s%d %s %s %b", depth, "", __LINE__, line, fullyQualifiedName!T,
 				isSection(line));
 		}
@@ -269,7 +269,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 			const name = fullyQualifiedName!T;
 		}
 		if(isSection(line) && getSection(line) != name) {
-			debug version (debugLogs) {
+			debug version(debugLogs) {
 				pragma(msg, buildSectionParse!(T));
 				writefln("%*s%d %s", depth, "", __LINE__, getSection(line));
 				writefln("%*s%d %x", depth, "", __LINE__,
@@ -278,7 +278,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 
 			mixin(buildSectionParse!(T));
 		} else if(isKeyValue(line)) {
-			debug version (debugLogs) {
+			debug version(debugLogs) {
 				pragma(msg, buildValueParse!(T));
 				writefln("%*s%d %s %s", depth, "", __LINE__, getKey(line),
 					getValue(line));
@@ -617,8 +617,9 @@ unittest {
 	assert(config.filters.style_check == ["+std.algorithm"]);
 }
 
-version (unittest)
-struct ConfuseTheParser;
+version(unittest) {
+	struct ConfuseTheParser;
+}
 
 unittest {
 	@INI("Reactor Configuration", "reactorConfig")
