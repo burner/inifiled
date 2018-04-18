@@ -9,13 +9,18 @@
 	"sourcePaths": ["source"],
 	"configurations": [
 		{
-			"name": "library",
+			"name": "library-quiet",
+			"targetType": "library",
+		},
+		{
+			"name": "library-verbose",
 			"targetType": "library",
 			"versions": ["debugLogs"]
 		},
 		{
-			"name": "library-quiet",
-			"targetType": "library"
+			"name": "unittest",
+			"targetType": "library",
+			"versions": ["debugLogs"]
 		}
 	]
 }
