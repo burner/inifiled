@@ -10,7 +10,7 @@
 	"configurations": [
 		{
 			"name": "library-quiet",
-			"targetType": "library",
+			"targetType": "library"
 		},
 		{
 			"name": "library-verbose",
