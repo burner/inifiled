@@ -1,7 +1,7 @@
 inifile-D
 =========
 
-![alt text](https://travis-ci.org/burner/inifiled.svg)
+[![Build Status](https://travis-ci.org/burner/inifiled.svg?branch=master)](https://travis-ci.org/burner/inifiled)
 
 A compile time ini file parser and writter generator for D.
 inifile.d takes annotated structs and create ini file parser and writer.
