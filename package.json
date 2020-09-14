@@ -1,6 +1,6 @@
 {
 	"name": "inifiled",
-	"description": "Compile Time Inifile Reader and Writer Generator",
+	"description": "Compile Time ini file Reader and Writer Generator",
 	"homepage": "https://github.com/burner/inifile-D",
 	"copyright": "Copyright © 2014, burner",
 	"authors": ["Robert burner Schadek"],

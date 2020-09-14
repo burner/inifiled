@@ -10,7 +10,7 @@ struct INI {
 	string msg;
 	string name;
 
-	static INI opCall(string s, string name = null) {
+	static INI opCall(string s, string name = null) pure {
 		INI ret;
 		ret.msg = s;
 		ret.name = name;
@@ -19,7 +19,7 @@ struct INI {
 	}
 }
 
-INI getINI(T)() @trusted {
+INI getINI(T)() pure @trusted {
 	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, T)) {
 		static if(is(it == INI)) {
@@ -45,7 +45,7 @@ INI getINI(T, string mem)() @trusted {
 	assert(false, mem);
 }
 
-string getTypeName(T)() @trusted {
+pure string getTypeName(T)() @trusted {
 	import std.traits : fullyQualifiedName;
 	return fullyQualifiedName!T;
 }
@@ -57,7 +57,7 @@ void readINIFile(T)(ref T t, string filename) {
 	readINIFileImpl(t, iRange);
 }
 
-bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
+pure bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
 	bool f;
 	bool b;
 
@@ -86,7 +86,7 @@ bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
 	return f && b;
 }
 
-unittest {
+@safe pure unittest {
 	assert(isSection("[initest.Person]"));
 	assert(isSection(" [initest.Person]"));
 	assert(isSection(" [initest.Person] "));
@@ -105,7 +105,7 @@ pure string getValueArray(T)(T line) @safe if(isInputRange!T) {
 	return getTimpl!('"','"')(line);
 }
 
-unittest {
+@safe pure unittest {
 	assert(getValue("firstname=\"Foo\"") == "Foo");
 	assert(getValue("firstname=\"Foo\",\"Bar\"") == "Foo\",\"Bar");
 }
@@ -120,7 +120,7 @@ pure string getKey(T)(T line) @safe if(isInputRange!T) {
 	return line[0 .. eq].strip();
 }
 
-unittest {
+@safe pure unittest {
 	assert(getKey("firstname=\"Foo\"") == "firstname");
 	assert(getKey("lastname =\"Foo\",\"Bar\"") == "lastname");
 }
@@ -141,7 +141,7 @@ pure bool isKeyValue(T)(T line) @safe if(isInputRange!T) {
 	return idx != -1;
 }
 
-unittest {
+@safe pure unittest {
 	assert(getSection("[initest.Person]") == "initest.Person",
 		getSection("[initest.Person]"));
 	assert(getSection(" [initest.Person]") == "initest.Person",
