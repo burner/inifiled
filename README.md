@@ -22,12 +22,12 @@ struct Child {
 	@INI("The age of the child") int age;
 }
 
-@INI("A Spose") 
-struct Spose {
-	@INI("The age of the spose") int age;
+@INI("A Spouse") 
+struct Spouse {
+	@INI("The age of the spouse") int age;
 
 	// Nesting
-	@INI("The House of the spose") House house;
+	@INI("The House of the spouse") House house;
 }
 
 @INI("A Dog") 
@@ -48,7 +48,7 @@ struct Person {
 	int dontShowThis;
 
 	// REGARD the nesting
-	@INI("A Spose") Spose spose;
+	@INI("A Spouse") Spouse spouse;
 
 	// REGARD the nesting
 	@INI("The family dog") Dog dog;
@@ -76,11 +76,11 @@ void main() {
 	p.someStrings ~= "Hello";
 	p.someStrings ~= "World";
 
-	p.spose.firstname = "Molly";
-	p.spose.age = 72;
+	p.spouse.firstname = "Molly";
+	p.spouse.age = 72;
 
-	p.spose.house.rooms = 5;
-	p.spose.house.floors = 2;
+	p.spouse.house.rooms = 5;
+	p.spouse.house.floors = 2;
 
 	p.dog.name = "Wuff";
 
