@@ -1,12 +1,19 @@
 module inifiled;
 
+import std.conv : to;
+import std.format : format, formattedWrite;
+import std.math : isClose, isNaN;
 import std.range : isInputRange, isOutputRange, ElementType;
+import std.string : indexOf, lastIndexOf, split, strip, stripRight;
+import std.traits : getUDAs, hasUDA, fullyQualifiedName, isArray, isBasicType
+	, isSomeString, isArray;
 
 string genINIparser(T)() {
 	return "";
 }
 
 struct INI {
+@safe:
 	string msg;
 	string name;
 
@@ -20,7 +27,6 @@ struct INI {
 }
 
 INI getINI(T)() pure @trusted {
-	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, T)) {
 		static if(is(it == INI)) {
 			return INI(null, null);
@@ -33,7 +39,6 @@ INI getINI(T)() pure @trusted {
 }
 
 INI getINI(T, string mem)() @trusted {
-	import std.traits : hasUDA;
 	foreach(it; __traits(getAttributes, __traits(getMember, T, mem))) {
 		static if(is(it == INI)) {
 			return INI(null, null);
@@ -45,8 +50,7 @@ INI getINI(T, string mem)() @trusted {
 	assert(false, mem);
 }
 
-pure string getTypeName(T)() @trusted {
-	import std.traits : fullyQualifiedName;
+private pure string getTypeName(T)() @trusted {
 	return fullyQualifiedName!T;
 }
 
@@ -57,7 +61,9 @@ void readINIFile(T)(ref T t, string filename) {
 	readINIFileImpl(t, iRange);
 }
 
-pure bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
+private pure bool isSection(T)(T line) @safe nothrow {
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
+
 	bool f;
 	bool b;
 
@@ -93,15 +99,18 @@ pure bool isSection(T)(T line) @safe nothrow if(isInputRange!T) {
 	assert(!isSection(";[initest.Person] "));
 }
 
-pure string getSection(T)(T line) @safe if(isInputRange!T) {
+private pure string getSection(T)(T line) @safe {
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
 	return getTimpl!('[',']')(line);
 }
 
-pure string getValue(T)(T line) @safe if(isInputRange!T) {
+private pure string getValue(T)(T line) @safe {
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
 	return getTimpl!('"','"')(line);
 }
 
-pure string getValueArray(T)(T line) @safe if(isInputRange!T) {
+private pure string getValueArray(T)(T line) @safe {
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
 	return getTimpl!('"','"')(line);
 }
 
@@ -110,9 +119,10 @@ pure string getValueArray(T)(T line) @safe if(isInputRange!T) {
 	assert(getValue("firstname=\"Foo\",\"Bar\"") == "Foo\",\"Bar");
 }
 
-pure string getKey(T)(T line) @safe if(isInputRange!T) {
-	import std.string : indexOf, strip;
+private pure string getKey(T)(T line) @safe {
 	import std.exception : enforce;
+
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
 
 	ptrdiff_t eq = line.indexOf('=');
 	enforce(eq != -1, "key value pair needs equal sign");
@@ -125,9 +135,9 @@ pure string getKey(T)(T line) @safe if(isInputRange!T) {
 	assert(getKey("lastname =\"Foo\",\"Bar\"") == "lastname");
 }
 
-pure string getTimpl(char l, char r, T)(T line) @safe if(isInputRange!T) {
-	import std.string : indexOf, lastIndexOf;
-	import std.format : format;
+private pure string getTimpl(char l, char r, T)(T line) @safe {
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
+
 	ptrdiff_t l = line.indexOf(l);
 	ptrdiff_t r = line.lastIndexOf(r);
 
@@ -135,8 +145,9 @@ pure string getTimpl(char l, char r, T)(T line) @safe if(isInputRange!T) {
 	return line[l+1 .. r].idup;
 }
 
-pure bool isKeyValue(T)(T line) @safe if(isInputRange!T) {
-	import std.string : indexOf;
+private pure bool isKeyValue(T)(T line) @safe {
+	static assert(isInputRange!T, T.stringof ~ " is not an InputRange");
+
 	ptrdiff_t idx = line.indexOf('=');
 	return idx != -1;
 }
@@ -161,11 +172,8 @@ pure bool isKeyValue(T)(T line) @safe if(isInputRange!T) {
 		getValue("\"initest.Person\""));
 }
 
-string buildSectionParse(T)() @safe {
-	import std.traits : hasUDA, fullyQualifiedName, isBasicType, isSomeString,
-		   isArray;
+private string buildSectionParse(T)() @safe {
 	import std.array : join;
-	import std.format : format;
 	string[] ret;
 
 	foreach(it; __traits(allMembers, T)) {
@@ -196,9 +204,7 @@ string buildSectionParse(T)() @safe {
 	}
 }
 
-string buildValueParse(T)() @safe {
-	import std.traits : hasUDA, fullyQualifiedName, isArray, isBasicType, isSomeString;
-	import std.format : format;
+private string buildValueParse(T)() @safe {
 	string ret = "switch(getKey(line)) { // " ~ fullyQualifiedName!T ~ "\n";
 
 	foreach(it; __traits(allMembers, T)) {
@@ -220,13 +226,12 @@ string buildValueParse(T)() @safe {
 	return ret ~ "default: break;\n}\n";
 }
 
-string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
-		if(isInputRange!IRange)
+private string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 {
-	import std.conv : to;
-	import std.string : split;
-	import std.algorithm.searching : startsWith;
-	import std.traits : hasUDA, fullyQualifiedName;
+	static assert(isInputRange!IRange, IRange.stringof ~ " is not an InputRange");
+
+	import std.algorithm.searching : endsWith, startsWith;
+
 	debug version(debugLogs) {
 		import std.stdio : writefln;
 	}
@@ -237,8 +242,6 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 	string line;
 	bool isMultiLine;
 	while(!input.empty()) {
-		import std.algorithm : endsWith;
-		import std.string : stripRight;
 		immutable bool wasMultiLine = isMultiLine;
 		auto currentLine = input.front.stripRight;
 		isMultiLine = currentLine.endsWith(`\`);
@@ -291,9 +294,12 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int depth = 0)
 	return line;
 }
 
-void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
-	if(isOutputRange!(ORange, ElementType!IRange) && isInputRange!IRange)
-{
+private void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted {
+	static assert(isOutputRange!(ORange, ElementType!IRange)
+		, ORange.stringf ~ " is not and OutputRange for " 
+		~ ElementType!(IRange).stringof);
+	static assert(isInputRange!IRange, IRange.stringof 
+		~ " is not an InputRange");
 	size_t idx = 0;
 	foreach(it; irange) {
 		if(idx % 77 == 0) {
@@ -310,11 +316,9 @@ void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
 	orange.put('\n');
 }
 
-void writeValue(ORange,T)(ORange orange, string name, T value) @trusted
-	if(isOutputRange!(ORange, string))
-{
-	import std.traits : isArray, isSomeString;
-	import std.format : formattedWrite;
+private void writeValue(ORange,T)(ORange orange, string name, T value) @trusted {
+	static assert(isOutputRange!(ORange, string)
+		, ORange.stringf ~ " is not and OutputRange for strings");
 	static if(isArray!T && !isSomeString!T) {
 		orange.formattedWrite("%s=\"", name);
 		foreach(idx, it; value) {
@@ -329,21 +333,16 @@ void writeValue(ORange,T)(ORange orange, string name, T value) @trusted
 	}
 }
 
-string removeFromLastPoint(string input) @safe {
-	import std.string : lastIndexOf;
+private string removeFromLastPoint(string input) pure @safe {
 	ptrdiff_t lDot = input.lastIndexOf('.');
-	if(lDot != -1 && lDot+1 != input.length) {
-		return input[lDot+1 .. $];
-	} else {
-		return input;
-	}
+	return lDot != -1 && lDot+1 != input.length
+		? input[lDot+1 .. $]
+		: input;
 }
 
-void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted
-	if(isOutputRange!(ORange, string))
-{
-	import std.traits : isBasicType, isSomeString;
-	import std.format : formattedWrite;
+private void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted {
+	static assert(isOutputRange!(ORange, string)
+		, ORange.stringf ~ " is not and OutputRange for strings");
 	static if(isSomeString!(ElementType!T) || isBasicType!(ElementType!T)) {
 		oRange.formattedWrite("%s=\"", removeFromLastPoint(name));
 		foreach(idx, it; value) {
@@ -372,9 +371,6 @@ void writeINIFile(T)(ref T t, string filename) @trusted {
 void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 		@trusted
 {
-	import std.traits : getUDAs, hasUDA, Unqual, isArray, isBasicType,
-		   isSomeString;
-	import std.format : formattedWrite;
 	if(hasUDA!(T, INI) && section) {
 		writeComment(oRange, getINI!T().msg);
 	}
@@ -455,9 +451,8 @@ struct Dog {
 	float kg;
 
 	bool opEquals(Dog other) {
-		import std.math : approxEqual, isNaN;
 		return this.name == other.name
-			&& (approxEqual(this.kg, other.kg)
+			&& (isClose(this.kg, other.kg)
 					|| (isNaN(this.kg) && isNaN(other.kg))
 				);
 	}
@@ -494,12 +489,11 @@ struct Person {
 	Dog dog;
 
 	bool opEquals(Person other) {
-		import std.math : approxEqual, isNaN;
 		import std.algorithm.comparison : equal;
 		return this.firstname == other.firstname
 			&& this.lastname == other.lastname
 			&& this.age == other.age
-			&& (approxEqual(this.height, other.height)
+			&& (isClose(this.height, other.height)
 				|| (isNaN(this.height) && isNaN(other.height)))
 			&& equal(this.someStrings, other.someStrings)
 			&& equal(this.someInts, other.someInts)

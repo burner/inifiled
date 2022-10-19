@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  Test:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macOS-latest
+        compiler:
+          - 'dmd-latest'
+          - 'ldc-latest'
+          - 'dmd-beta'
+          - 'ldc-beta' # the tests crash
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install compiler
+      uses: dlang-community/setup-dlang@v1
+      with:
+        compiler: ${{ matrix.compiler }}
+
+    - name: Test
+      run: |
+        dub test
+
+  Skip:
+    if: "contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip CI 🚫
+        run: echo skip CI
