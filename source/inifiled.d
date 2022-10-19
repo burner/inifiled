@@ -26,7 +26,7 @@ struct INI {
 	}
 }
 
-INI getINI(T)() pure @trusted {
+private INI getINI(T)() pure @trusted {
 	foreach(it; __traits(getAttributes, T)) {
 		static if(is(it == INI)) {
 			return INI(null, null);
@@ -38,7 +38,7 @@ INI getINI(T)() pure @trusted {
 	assert(false);
 }
 
-INI getINI(T, string mem)() @trusted {
+private INI getINI(T, string mem)() @trusted {
 	foreach(it; __traits(getAttributes, __traits(getMember, T, mem))) {
 		static if(is(it == INI)) {
 			return INI(null, null);
